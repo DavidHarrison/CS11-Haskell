@@ -1,0 +1,40 @@
+-- File: hcat.hs
+-- concatenate given files xor stdin
+
+-- provides getArgs
+import System.Environment
+-- provides Handle, openFile, ReadMode
+import System.IO
+
+main :: IO ()
+-- TODO, use stdin if file not available
+main = file_text >>= putStr
+  where
+    -- the lines from stdin
+    stdin_text :: IO String
+    stdin_text = getContents
+    -- the text from files
+    file_text :: IO String
+    file_text = file_texts >>= return . concat
+    -- a list of text for each file
+    file_texts :: IO [String]
+    file_texts = files >>= sequence . map (hGetContents)
+    -- hGetContents :: Handle -> IO String
+    -- the list of files from arguments
+    files :: IO [Handle]
+    files = filesFromArgs
+
+-- create a list of IO Handles for each argument that represents a file
+filesFromArgs :: IO [Handle]
+filesFromArgs = file_names >>= sequence . map open
+  where
+    open :: String -> IO Handle
+    open f = openFile f ReadMode
+    file_names :: IO [String]
+    file_names = getArgs >>= return . filter isFile
+    -- getArgs :: IO [String]
+
+-- check whether the argument is a file
+isFile :: String -> Bool
+-- check that the name is not an option
+isFile (c:cs) = (c /= '-')
